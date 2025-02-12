@@ -15,6 +15,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // cache islemleri icin
 builder.Services.AddBlazoredLocalStorage();
 
+//TODO UI tarafýndan otobusKonnumlarina istek atilacak
 //UI services
 builder.Services.AddScoped<IUI_HatOtobusServices, UI_HatOtobusServices>();
 builder.Services.AddHttpClient<UI_HatOtobusServices>();
