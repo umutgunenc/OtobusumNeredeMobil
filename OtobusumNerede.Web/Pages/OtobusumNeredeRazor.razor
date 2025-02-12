@@ -1,0 +1,356 @@
+﻿@page "/OtobusumNerede"
+
+@inject IGetHatlarApi _getHatlarApi
+@inject IGetHatDurakApi _getHatDurakApi
+@inject IGetHatOtobusApi _getHatOtobusApi
+@inject IGetSeferSaatleriApi _getSeferSaatleriApi
+@inject ILocalStorageService _localStorage
+@inject HttpClient _httpClient
+
+
+
+<div class="justify-content-center align-items-center text-center mt-4">
+	<h3 class="mx-3">Otobusum Nerede</h3>
+
+	<div class="row mb-3 m-2">
+		@if (isBusy)
+		{
+			<IsBusyComponent />
+		}
+		else
+		{
+			<div class="col-md-12 my-4">
+				<select id="hatSelect" class="form-control" @onchange="HatDegisti">
+					@if (secilenHat == null)
+					{
+						<option value="" disabled selected>Lütfen bir hat seçin</option>
+						@foreach (var hat in HatlarDto)
+						{
+							<option value="@hat.HatKodu">@hat.HatKodu</option>
+						}
+					}
+					else
+					{
+						<option value="" disabled selected>Lütfen bir hat seçin</option>
+
+						@foreach (var hat in HatlarDto)
+						{
+							if(secilenHat==hat.HatKodu){
+								<option value="@hat.HatKodu" selected>@hat.HatKodu</option>
+							}else{
+								<option value="@hat.HatKodu">@hat.HatKodu</option>
+							}
+						}
+					}
+					
+				</select>
+			</div>
+			@if (!SeferVarMi)
+			{
+				<h2 class="col-md-12 my-4 align-items-center alert alert-danger" role="alert">
+					Sefer Bulunamadı
+				</h2>
+			}
+			else
+			{
+				<div class="col-md-12 my-4 align-items-center">
+					<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;"></div>
+				</div>
+			}
+
+
+		}
+	</div>
+</div>
+
+
+@code {
+
+	private string secilenHat;
+	private bool isBusy { get; set; } = true;
+
+	private List<HatDto> HatlarDto = new();
+	private List<HatDurakDto> HatlarDuraklarDto = new();
+	private List<HatOtobusDto> HatlarOtobuslerDto = new();
+	private Timer _timer;
+	private List<string> guzargahKodlari { get; set; } = new();
+	private List<object> GeoJsonListesi { get; set; } = new();
+	private bool SeferVarMi { get; set; } = true;
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		HatlarDto = await _getHatlarApi.GetHatlarDtoAsync();
+		isBusy = false;
+	}
+
+	private async Task HatDegisti(ChangeEventArgs e)
+	{
+		SeferVarMi = true;
+		isBusy = true;
+		secilenHat = e.Value.ToString();
+		HatlarDuraklarDto = await _getHatDurakApi.GetHatDurakById(secilenHat);
+		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
+		if (HatlarOtobuslerDto.Count == 0)
+		{
+			SeferVarMi = false;
+			isBusy = false;
+			await InvokeAsync(StateHasChanged);
+			return;
+		}
+		GunlerEnum gun = GetGunlerEnum();
+		// SeferSaatleriDto = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, gun);
+		guzargahKodlari = GuzergahKodlariniGetir(HatlarOtobuslerDto);
+		GeoJsonListesi = await _getHatOtobusApi.GuzergahBilgileriAsync(guzargahKodlari);
+		isBusy = false;
+
+		await InvokeAsync(StateHasChanged); // Ensure the UI is updated before rendering the map
+		await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi);
+
+		if (_timer != null)
+			_timer.Dispose();
+		_timer = new Timer(async _ => await UpdateOtobusKonumlari(), null, 40000, 40000);
+
+	}
+
+	private List<string> GuzergahKodlariniGetir(List<HatOtobusDto> HatlarOtobuslerDto)
+	{
+		if (guzargahKodlari.Count > 0)
+			guzargahKodlari.Clear();
+		foreach (var hatOtobus in HatlarOtobuslerDto)
+		{
+			if (!guzargahKodlari.Contains(hatOtobus.GuzergahKodu))
+				guzargahKodlari.Add(hatOtobus.GuzergahKodu);
+		}
+		foreach (var hatOtobus in HatlarOtobuslerDto)
+		{
+			if (!guzargahKodlari.Contains(hatOtobus.GuzergahKodu))
+				guzargahKodlari.Add(hatOtobus.GuzergahKodu);
+		}
+		return guzargahKodlari;
+	}
+
+
+	private GunlerEnum GetGunlerEnum()
+	{
+
+		var gun = DateTime.Now.DayOfWeek;
+
+		switch (gun)
+		{
+			case DayOfWeek.Monday:
+				return GunlerEnum.HaftaIci;
+			case DayOfWeek.Tuesday:
+				return GunlerEnum.HaftaIci;
+			case DayOfWeek.Wednesday:
+				return GunlerEnum.HaftaIci;
+			case DayOfWeek.Thursday:
+				return GunlerEnum.HaftaIci;
+			case DayOfWeek.Friday:
+				return GunlerEnum.HaftaIci;
+			case DayOfWeek.Saturday:
+				return GunlerEnum.Cumartesi;
+			case DayOfWeek.Sunday:
+				return GunlerEnum.Pazar;
+			default:
+				return GunlerEnum.Pazar;
+		}
+	}
+
+	private async Task UpdateOtobusKonumlari()
+	{
+		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
+		await JS.InvokeVoidAsync("updateBusPositions", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender && HatlarDuraklarDto.Any())
+		{
+			await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
+		}
+	}
+}
+
+@inject IJSRuntime JS
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+<script>
+		// Haritayı ve işaretçileri tutmak için global değişkenler
+	let map;
+	let busMarkers = [];
+	let routeLayers = []; // Rota katmanlarını saklamak için
+
+	window.renderMap = (duraklar, otobusler, rotalar) => {
+		const mapContainer = document.getElementById('map');
+
+		if (mapContainer && !mapContainer._leaflet_map) {
+			// Haritayı oluştur
+			map = L.map('map').setView([40.954977, 29.094129], 13); // Başlangıç merkezi
+
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; OpenStreetMap contributors'
+			}).addTo(map);
+
+			// Kullanıcının konumunu bulma
+			map.locate({ setView: true, maxZoom: 20 });
+
+			// Kullanıcı konumu alındığında yapılacak işlemler
+			map.on('locationfound', function (e) {
+				map.setView(e.latlng, 16); // Kullanıcının konumuna odaklan
+				L.marker(e.latlng) // Kullanıcı konumu marker'ı
+					.bindPopup("Buradasınız!")
+					.addTo(map);
+			});
+
+			// Kullanıcı konumu bulunamadığında yapılacak işlemler
+			map.on('locationerror', function (e) {
+				alert("Konum alınamadı. Lütfen konum erişimine izin verin.");
+			});
+
+			// Durak ikonları
+			const durakIcon1 = L.icon({
+				iconUrl: '/icons/busStationBlue (2).svg',  // Sefer Yönü 1 için ikon
+				iconSize: [32, 32],
+				iconAnchor: [16, 32],
+				popupAnchor: [0, -32]
+			});
+
+			const durakIcon2 = L.icon({
+				iconUrl: '/icons/busStationRed (2).svg',  // Sefer Yönü 0 için ikon
+				iconSize: [32, 32],
+				iconAnchor: [16, 32],
+				popupAnchor: [0, -32]
+			});
+
+			// Otobüs ikonu
+			const busIcon = L.icon({
+				iconUrl: '/icons/busIcon.png',
+				iconSize: [48, 48],
+				iconAnchor: [16, 32],
+				popupAnchor: [0, -32]
+			});
+
+			// Durakları haritaya ekle
+			duraklar.forEach(durak => {
+				const chosenIcon = durak.seferYonu === 1 ? durakIcon1 : durakIcon2;
+				L.marker([durak.enlem, durak.boylam], { icon: chosenIcon })
+					.bindPopup(`<b>${durak.durakAdi}</b>`)
+					.addTo(map);
+			});
+
+			// Daha önce eklenen rotaları temizleme
+			if (routeLayers) {
+				routeLayers.forEach(layer => map.removeLayer(layer));
+			}
+			routeLayers = [];
+
+			// // Rotaları GeoJSON formatında haritaya ekleme
+			// rotalar.forEach(rota => {
+			// 	const geoJsonLayer = L.geoJSON(rota, {
+			// 		style: {
+			// 			color: 'red',    // Rota rengi kırmızı
+			// 			weight: 4,       // Çizgi kalınlığı
+			// 			opacity: 0.8     // Saydamlık
+			// 		}
+			// 	}).addTo(map);
+
+			// 	// Rotaları saklama (sonradan silmek için)
+			// 	routeLayers.push(geoJsonLayer);
+			// });
+
+			rotalar.forEach(rota => {
+				// Renk belirleme fonksiyonu
+				const getColor = (yon, deparNo) => {
+
+					if(deparNo!==0 && yon==="DÖNÜŞ"){
+						return "yellow"
+					}else if(deparNo!==0 && yon === "GİDİŞ"){
+						return "green";
+					}else if(yon === "DÖNÜŞ"){
+						return "red";
+					}
+					else if (yon === "GİDİŞ") {
+						return "blue";
+					}
+					else{
+						return "pink";
+					}
+				};
+
+				// Rota rengini belirle
+				const color = getColor(rota.properties.yon, rota.properties.deparNo);
+
+				// GeoJSON katmanını oluştur ve haritaya ekle
+				const geoJsonLayer = L.geoJSON(rota, {
+					style: {
+						color: color,    // Belirlenen renk
+						weight: 4,       // Çizgi kalınlığı
+						opacity: 0.8     // Saydamlık
+					}
+				}).addTo(map);
+
+				// Rotaları saklama (sonradan silmek için)
+				routeLayers.push(geoJsonLayer);
+			});
+
+
+			// Otobüsleri haritaya ekle
+			otobusler.forEach(otobus => {
+				const date = new Date(otobus.konumZamani);
+				const hours = String(date.getHours()).padStart(2, '0');
+				const minutes = String(date.getMinutes()).padStart(2, '0');
+				const seconds = String(date.getSeconds()).padStart(2, '0');
+				const day = String(date.getDate()).padStart(2, '0');
+				const month = String(date.getMonth() + 1).padStart(2, '0');
+				const year = date.getFullYear();
+
+				const formattedDateTime = `Son Konum Saati ${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+
+				const otobusMarker = L.marker([otobus.enlem, otobus.boylam], { icon: busIcon })
+					.bindPopup(`<b>${formattedDateTime}</b>`)
+					.addTo(map);
+
+				busMarkers.push(otobusMarker);
+			});
+		}
+	};
+
+	// Otobüs konumlarını güncelle
+	window.updateBusPositions = (duraklar, otobusler) => {
+		// Eski otobüs işaretçilerini kaldır
+		busMarkers.forEach(marker => map.removeLayer(marker));
+		busMarkers = [];
+
+		// Yeni otobüs işaretçilerini ekle
+		const busIcon = L.icon({
+			iconUrl: '/icons/busIcon.png',
+			iconSize: [48, 48],
+			iconAnchor: [16, 32],
+			popupAnchor: [0, -32]
+		});
+
+		otobusler.forEach(otobus => {
+			const date = new Date(otobus.konumZamani);
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			const seconds = String(date.getSeconds()).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const year = date.getFullYear();
+
+			const formattedDateTime = `Son Konum Saati ${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+
+			const otobusMarker = L.marker([otobus.enlem, otobus.boylam], { icon: busIcon })
+				.bindPopup(`<b>${formattedDateTime}</b>`)
+				.addTo(map);
+
+			busMarkers.push(otobusMarker);
+		});
+	};
+</script>
+

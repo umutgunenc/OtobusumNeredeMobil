@@ -1,0 +1,136 @@
+﻿@page "/Duyurular"
+
+
+
+@inject IGetDuyurularApi _getDuyurularApi
+@inject IGetHatlarApi _getHatlarApi
+@inject ILocalStorageService _localStorage
+
+<div class="justify-content-center align-items-center text-center mt-4">
+	<h3 class="mx-3">Duyurular</h3>
+
+	<div class="row mb-3 m-2">
+		@if (isBusy)
+		{
+			<IsBusyComponent />
+		}
+		else
+		{
+			<div class="col mx-4">
+
+				<div class="my-3">
+					<select class="form-select" aria-label="Default select example" @onchange="HatDegisti">
+						@if (SecilenHat == null)
+						{
+							<option selected value="">Hepsini Göster</option>
+						}
+						else
+						{
+							<option value="">Hepsini Göster</option>
+						}
+						@foreach (var hat in HatlarListesi)
+						{	
+							<option value="@hat.HatKodu">@hat.HatKoduAdi</option>
+							if (SecilenHat != null && hat.HatKodu == SecilenHat.HatKodu)
+							{
+								<option selected value="@hat.HatKodu">@hat.HatKoduAdi</option>
+							}
+						}
+					</select>
+				</div>
+				@if (DuyurularListesi.Count == 0)
+				{
+					<h3 class="mx-3">Duyuru Bulunamadı</h3>
+				}
+				else
+				{
+					@foreach (var duyuru in DuyurularListesi)
+					{
+						<div class="row">
+							<div class="col-md-12 mb-3">
+								<div class="card text-bg-warning">
+									<div class="card-body">
+										<h5 class="card-title">@duyuru.DuyuruBasligi</h5>
+										<p class="card-text">Duyuru Tipi : @duyuru.DuyuruTipi</p>
+										<p class="card-text">Duyuru Saati : @duyuru.DuyuruSaati</p>
+										<button @onclick="() => OpenModal(duyuru)" class="btn btn-primary">Duyuru Gör</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					}
+				}
+
+
+			</div>
+		}
+	</div>
+</div>
+
+<!-- Modal Component -->
+<ModalComponent @ref="modal" Title="Duyuru Detayı">
+	<ModalBody>
+		<p><strong>Başlık:</strong> @secilenDuyuru?.DuyuruBasligi</p>
+		<p><strong>Tip:</strong> @secilenDuyuru?.DuyuruTipi</p>
+		<p><strong>Saat:</strong> @secilenDuyuru?.DuyuruSaati</p>
+		<p><strong>Mesaj:</strong> @secilenDuyuru?.DuyuruMesaji</p>
+	</ModalBody>
+	<ModalFooter>
+		<div class="d-grid me-2">
+			<button @onclick="CloseModal" class="btn btn-secondary">Kapat</button>
+		</div>
+	</ModalFooter>
+</ModalComponent>
+
+@code {
+
+	private bool isBusy = true;
+	private List<DuyurularDto> DuyurularListesi { get; set; } = new List<DuyurularDto>();
+	private DuyurularDto secilenDuyuru;
+	private List<HatDto> HatlarListesi { get; set; } = new List<HatDto>();
+	private HatDto SecilenHat { get; set; } = null;
+	private ModalComponent modal;
+
+	protected override async Task OnInitializedAsync()
+	{
+		DuyurularListesi = await _getDuyurularApi.GetDuyurularAsync();
+		HatlarListesi = await _getHatlarApi.GetHatlarDtoAsync();
+		isBusy = false;
+	}
+
+	private void OpenModal(DuyurularDto duyuru)
+	{
+		secilenDuyuru = duyuru;
+		modal.Open();
+	}
+
+	private void CloseModal()
+	{
+		modal.Close();
+	}
+
+	private async Task HatDegisti(ChangeEventArgs e)
+	{
+		isBusy = true;
+		var secilenHat = e.Value.ToString();
+		DuyurularListesi = await _getDuyurularApi.GetDuyurularAsync();
+
+		SecilenHat = HatlarListesi.FirstOrDefault(x => x.HatKodu == secilenHat);
+		if (SecilenHat != null)
+		{
+			DuyurularListesi = DuyurularListesi
+				.Where(x => x.DuyuruBasligi
+						.Split(" /")
+						.First()
+						.Equals(secilenHat))
+				.ToList();
+
+			SecilenHat = HatlarListesi.FirstOrDefault(x => x.HatKodu == secilenHat);
+		}
+		else {
+
+			SecilenHat = null;
+		}
+		isBusy = false;
+	}
+}

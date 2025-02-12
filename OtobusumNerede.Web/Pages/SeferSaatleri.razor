@@ -1,0 +1,229 @@
+﻿@page "/SeferSaatleri"
+
+
+@inject IGetHatlarApi _getHatlarApi
+@inject IGetSeferSaatleriApi _getSeferSaatleriApi
+@inject ILocalStorageService _localStorage
+
+
+
+
+<div class="justify-content-center align-items-center text-center mt-4">
+	<h3 class="mx-3">Sefer Saatleri</h3>
+
+	<div class="row mb-3 m-2">
+		@if (isBusy)
+		{
+			<IsBusyComponent />
+		}
+		else
+		{
+
+
+			<div class="col-md-12 my-4">
+				@* 				<label for="hatSelect" class="form-label">Hat Kodu Seç:</label>
+ *@				<select id="hatSelect" class="form-control" @onchange="HatDegisti">
+					@if (secilenHat == null)
+					{
+						<option value="" disabled selected>Lütfen bir hat seçin</option>
+
+					}
+					else
+					{
+						<option value=@secilenHat selected>@secilenHat</option>
+
+					}
+					@foreach (var hat in HatlarDto)
+					{
+						<option value="@hat.HatKodu">@hat.HatKodu</option>
+					}
+				</select>
+			</div>
+			@if (!string.IsNullOrEmpty(secilenHat))
+			{
+
+
+				<div class="col-md-12 my-4">
+					@* 					<label for="gunSelect" class="form-label">Gün Tipi Seç:</label>
+ *@					<select class="form-control" @onchange="GunSecildi">
+						@if (!gunSecildiMi)
+						{
+							<option value="" disabled selected>Gün Seçiniz</option>
+						}
+						else
+						{
+							<option value="" disabled>Gün Seçiniz</option>
+						}
+
+						@foreach (var gun in Enum.GetValues(typeof(GunlerEnum)).Cast<GunlerEnum>())
+						{
+
+							<option value="@gun">@GetGunAdi(gun)</option>
+						}
+					</select>
+				</div>
+			}
+			if (showTable)
+			{
+				if (SeferSaatleriListesi.GidisSeferleri.Count == 0 && SeferSaatleriListesi.DonusSeferleri.Count == 0)
+				{
+					<h3 class="my-3">Aranılan Güzergahta Sefer Bulunamadı</h3>
+				}
+				else
+				{
+					<div class="table-container p-2 my-3">
+						<table class="table table-light table-hover table-bordered">
+							<thead class="thead-dark">
+								<tr>
+									<th colspan="4" class="text-center">
+										@SeferSaatleriListesi.GidisSeferleri.FirstOrDefault().HatAdi
+									</th>
+								</tr>
+
+							</thead>
+							<thead class="thead-dark">
+								<tr>
+									<th colspan="2" class="text-center">
+										Gidiş
+									</th>
+									<th colspan="2" class="text-center">
+										Dönüş
+									</th>
+								</tr>
+
+							</thead>
+							<thead class="thead-dark">
+								<tr>
+									<th class="text-center">
+										Başlangıç Durağı
+									</th>
+									<th class="text-center">
+										Sefer Saati
+									</th>
+									<th class="text-center">
+										Başlangıç Durağı
+									</th>
+									<th class="text-center">
+										Sefer Saati
+									</th>
+								</tr>
+
+							</thead>
+							<tbody>
+								@for (int i = 0; i < Math.Max(SeferSaatleriListesi.GidisSeferleri.Count, SeferSaatleriListesi.DonusSeferleri.Count); i++)
+								{
+									<tr>
+										<td class="text-center p-3 col-3">
+											@if (i < SeferSaatleriListesi.GidisSeferleri.Count)
+											{
+												@SeferSaatleriListesi.GidisSeferleri[i].BaslangıcDuragi
+											}
+											else
+											{
+											}
+										</td>
+										<td class="text-center p-3 col-3">
+											@if (i < SeferSaatleriListesi.GidisSeferleri.Count)
+											{
+												@SeferSaatleriListesi.GidisSeferleri[i].SeferSaati
+											}
+											else
+											{
+											}
+										</td>
+										<td class="text-center p-3 col-3">
+											@if (i < SeferSaatleriListesi.DonusSeferleri.Count)
+											{
+												@SeferSaatleriListesi.DonusSeferleri[i].BaslangıcDuragi
+											}
+											else
+											{
+											}
+										</td>
+										<td class="text-center p-3 col-3">
+											@if (i < SeferSaatleriListesi.DonusSeferleri.Count)
+											{
+												@SeferSaatleriListesi.DonusSeferleri[i].SeferSaati
+											}
+											else
+											{
+											}
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				}
+			}
+		}
+	</div>
+
+</div>
+
+
+
+@code {
+
+	private bool gunSecildiMi = false;
+	private string secilenHat;
+	private bool isBusy { get; set; } = true;
+	private bool showTable = false;
+
+	private List<GunlerEnum> Gunler = Enum
+								.GetValues(typeof(GunlerEnum))
+								.Cast<GunlerEnum>()
+								.ToList();
+
+	private SeferListeleriDto SeferSaatleriListesi = new();
+	private List<HatDto> HatlarDto = new();
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		HatlarDto = await _getHatlarApi.GetHatlarDtoAsync();
+		isBusy = false;
+	}
+
+	private async Task HatDegisti(ChangeEventArgs e)
+	{
+		secilenHat = e.Value.ToString();
+		showTable = false;
+		await _localStorage.SetItemAsync("secilenHat", secilenHat);
+		gunSecildiMi = false;
+	}
+	private async Task<bool> GunSecildi(ChangeEventArgs e)
+	{
+		isBusy = true;
+		Enum.TryParse<GunlerEnum>(e.Value?.ToString(), out var secilenGun);
+		SeferSaatleriListesi = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, secilenGun);
+		showTable = true;
+		isBusy = false;
+		secilenHat = await _localStorage.GetItemAsync<string>("secilenHat");
+		return gunSecildiMi = true;
+
+	}
+
+	private string GetGunAdi(GunlerEnum gun)
+	{
+		string GunAdi;
+		switch (gun)
+		{
+			case GunlerEnum.HaftaIci:
+				GunAdi = "Hafta İçi";
+				break;
+			case GunlerEnum.Cumartesi:
+				GunAdi = "Cumartesi";
+				break;
+			case GunlerEnum.Pazar:
+				GunAdi = "Pazar";
+				break;
+			default:
+				GunAdi = gun.ToString();
+				break;
+		}
+		return GunAdi;
+
+	}
+
+}
