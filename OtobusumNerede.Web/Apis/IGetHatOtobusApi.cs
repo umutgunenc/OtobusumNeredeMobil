@@ -1,5 +1,7 @@
-﻿using OtobusumNerede.Shared.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using OtobusumNerede.Shared.DTOs;
 using OtobusumNerede.Shared.Enums;
+using OtobusumNerede.Shared.UIServicesModels;
 using Refit;
 
 namespace OtobusumNerede.Web.Apis
@@ -9,11 +11,11 @@ namespace OtobusumNerede.Web.Apis
         //[Get("/api/HatOtobus/GetHatOtobus/{htppClient}")]
         //Task<List<HatOtobusDto>> GetHatOtobusById(string hatKodu);
 
-        [Post("/api/HatOtobus/GetHatOtobus/{hatKodu}/{httpClient}")]
-        Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(string hatKodu, HttpClient httpClient);
-
         [Get("/api/HatOtobus/GetHatGeoJson")]
         Task<List<object>> GuzergahBilgileriAsync([Query(CollectionFormat.Multi)] List<string> guzergahKodlari);
+
+        [Post("/api/HatOtobus/GetHatOtobus")]
+        Task<List<HatOtobusDto>> GetHatOtobusDtoAsync (List<GetHatOtoKonumJsonResultServiceModel> model);
 
     }
 }

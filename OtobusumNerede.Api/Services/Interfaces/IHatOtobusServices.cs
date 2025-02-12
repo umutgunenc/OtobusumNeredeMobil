@@ -5,7 +5,7 @@ namespace OtobusumNerede.Api.Services.Interfaces
 {
     public interface IHatOtobusServices
     {
-        Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(string hatKodu, HttpClient httpClient);
+        Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(List<GetHatOtoKonumJsonResultServiceModel> HatOtobusJsonServiceModel);
         Task<List<object>> HatGeoJsonBilgileriAsync (List<string> guzergahKodlari);
 
     }

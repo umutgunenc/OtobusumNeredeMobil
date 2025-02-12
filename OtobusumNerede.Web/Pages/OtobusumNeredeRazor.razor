@@ -5,7 +5,7 @@
 @inject IGetHatOtobusApi _getHatOtobusApi
 @inject IGetSeferSaatleriApi _getSeferSaatleriApi
 @inject ILocalStorageService _localStorage
-@inject HttpClient _httpClient
+@inject IUI_HatOtobusServices _uiHatOtobusServices
 
 
 
@@ -42,7 +42,7 @@
 							}
 						}
 					}
-					
+
 				</select>
 			</div>
 			@if (!SeferVarMi)
@@ -72,6 +72,7 @@
 	private List<HatDto> HatlarDto = new();
 	private List<HatDurakDto> HatlarDuraklarDto = new();
 	private List<HatOtobusDto> HatlarOtobuslerDto = new();
+	private List<GetHatOtoKonumJsonResultServiceModel> HatOtoKonumJsonResultModel = new();
 	private Timer _timer;
 	private List<string> guzargahKodlari { get; set; } = new();
 	private List<object> GeoJsonListesi { get; set; } = new();
@@ -90,14 +91,19 @@
 		isBusy = true;
 		secilenHat = e.Value.ToString();
 		HatlarDuraklarDto = await _getHatDurakApi.GetHatDurakById(secilenHat);
-		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
-		if (HatlarOtobuslerDto.Count == 0)
+		HatOtoKonumJsonResultModel = await _uiHatOtobusServices.HatOtobusBilgileriAsync(secilenHat);
+
+		if (HatOtoKonumJsonResultModel.Count == 0)
 		{
 			SeferVarMi = false;
 			isBusy = false;
 			await InvokeAsync(StateHasChanged);
 			return;
 		}
+
+
+		HatlarOtobuslerDto = await _getHatOtobusApi.GetHatOtobusDtoAsync(HatOtoKonumJsonResultModel);
+	// .HatOtobusBilgileriAsync(HatOtoKonumJsonResultModel);
 		GunlerEnum gun = GetGunlerEnum();
 		// SeferSaatleriDto = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, gun);
 		guzargahKodlari = GuzergahKodlariniGetir(HatlarOtobuslerDto);
@@ -159,7 +165,7 @@
 
 	private async Task UpdateOtobusKonumlari()
 	{
-		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
+		HatlarOtobuslerDto = await _getHatOtobusApi.GetHatOtobusDtoAsync(HatOtoKonumJsonResultModel);
 		await JS.InvokeVoidAsync("updateBusPositions", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
 	}
 

@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using OtobusumNerede.Shared.UIServices;
 using OtobusumNerede.Web;
 using OtobusumNerede.Web.Apis;
 using Refit;
@@ -14,13 +15,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // cache islemleri icin
 builder.Services.AddBlazoredLocalStorage();
 
-
-builder.Services.AddScoped(sp =>
-    new HttpClient
-    {
-        BaseAddress = new Uri("https://api.ibb.gov.tr/iett/FiloDurum/")
-    }
-);
+//UI services
+builder.Services.AddScoped<IUI_HatOtobusServices, UI_HatOtobusServices>();
+builder.Services.AddHttpClient<UI_HatOtobusServices>();
 
 
 ConfigureRefit(builder.Services);
@@ -31,6 +28,8 @@ await builder.Build().RunAsync();
 static void ConfigureRefit(IServiceCollection services)
 {
     string apiBaseUrl = "https://localhost:7048";
+    string apiUIBaseUrl = "https://localhost:7047";
+
 
     services
         .AddRefitClient<IGetHatDurakApi>()
@@ -44,8 +43,6 @@ static void ConfigureRefit(IServiceCollection services)
         .AddRefitClient<IGetSeferSaatleriApi>()
         .ConfigureHttpClient(httpClient => httpClient.BaseAddress = new Uri(apiBaseUrl));
 
-    //string hatOtobusUrl = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme";
-
     services
         .AddRefitClient<IGetHatOtobusApi>()
         .ConfigureHttpClient(httpClient => httpClient.BaseAddress = new Uri(apiBaseUrl));
@@ -58,5 +55,7 @@ static void ConfigureRefit(IServiceCollection services)
         .AddRefitClient<IGetHatOtobusApi>()
         .ConfigureHttpClient(httpClient => httpClient.BaseAddress = new Uri(apiBaseUrl));
 
-
+    services
+        .AddRefitClient<IUIGetHatOtobusApi>()
+        .ConfigureHttpClient(httpClient => httpClient.BaseAddress = new Uri(apiUIBaseUrl));   
 }

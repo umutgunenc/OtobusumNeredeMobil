@@ -21,49 +21,48 @@ namespace OtobusumNerede.Api.Services
         private readonly IMapper _mapper;
         private readonly OtobusumNeredeDbContext _context;
 
-        public HatOtobusServices(HttpClient httpClient, List<HatOtobusDto> hatOtobusDto, IMapper mapper, OtobusumNeredeDbContext context) 
+        public HatOtobusServices( List<HatOtobusDto> hatOtobusDto, IMapper mapper, OtobusumNeredeDbContext context)
         {
-            _httpClient = httpClient;
             _hatOtobusDtoList = hatOtobusDto;
             _mapper = mapper;
             _context = context;
         }
 
 
-        public async Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(string hatKodu, HttpClient httpClient)
+        public async Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(List<GetHatOtoKonumJsonResultServiceModel> HatOtobusJsonServiceModel)
         {
-            var url = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx?wsdl";
+            //var url = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx?wsdl";
 
-            var soapRequest = $@"
-                <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
-                   <soapenv:Header/>
-                   <soapenv:Body>
-                      <tem:GetHatOtoKonum_json>
-                         <!--Optional:-->
-                         <tem:HatKodu>{hatKodu}</tem:HatKodu>
-                      </tem:GetHatOtoKonum_json>
-                   </soapenv:Body>
-                </soapenv:Envelope>";
+            //var soapRequest = $@"
+            //    <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
+            //       <soapenv:Header/>
+            //       <soapenv:Body>
+            //          <tem:GetHatOtoKonum_json>
+            //             <!--Optional:-->
+            //             <tem:HatKodu>{hatKodu}</tem:HatKodu>
+            //          </tem:GetHatOtoKonum_json>
+            //       </soapenv:Body>
+            //    </soapenv:Envelope>";
 
-            var content = new StringContent(soapRequest, Encoding.UTF8, "text/xml");
+            //var content = new StringContent(soapRequest, Encoding.UTF8, "text/xml");
 
-            content.Headers.Add("SOAPAction", "http://tempuri.org/GetHatOtoKonum_json");
+            //content.Headers.Add("SOAPAction", "http://tempuri.org/GetHatOtoKonum_json");
             try
             {
 
-                var response = await _httpClient.PostAsync(url, content);
-                var responseString = await response.Content.ReadAsStringAsync();
+                //    var response = await _httpClient.PostAsync(url, content);
+                //    var responseString = await response.Content.ReadAsStringAsync();
 
-                // Deserialize the XML response
-                var serializer = new XmlSerializer(typeof(SoapEnvelope));
-                var reader = new StringReader(responseString);
-                var soapEnvelope = (SoapEnvelope)serializer.Deserialize(reader);
+                //    // Deserialize the XML response
+                //    var serializer = new XmlSerializer(typeof(SoapEnvelope));
+                //    var reader = new StringReader(responseString);
+                //    var soapEnvelope = (SoapEnvelope)serializer.Deserialize(reader);
 
 
-                var HatOtobusJsonServiceModel = JsonSerializer.Deserialize<List<GetHatOtoKonumJsonResultServiceModel>>(soapEnvelope.Body.GetHatOtoKonumJsonResponse.GetHatOtoKonumJsonResult);
+                //    var HatOtobusJsonServiceModel = JsonSerializer.Deserialize<List<GetHatOtoKonumJsonResultServiceModel>>(soapEnvelope.Body.GetHatOtoKonumJsonResponse.GetHatOtoKonumJsonResult);
 
                 _hatOtobusDtoList = _mapper.Map<List<HatOtobusDto>>(HatOtobusJsonServiceModel);
-                reader.Close();
+                //reader.Close();
 
 
                 return _hatOtobusDtoList;
@@ -82,7 +81,7 @@ namespace OtobusumNerede.Api.Services
                 .Where(x => guzergahKodlari.Contains(x.GUZERGAH_K) && x.DURUM == "AKTİF")
                 .Select(x => new OtobusRotasi
                 {
-                    RouteGeometry = x.RouteGeometry, 
+                    RouteGeometry = x.RouteGeometry,
                     YON = x.YON,
                     DEPAR_NO = x.DEPAR_NO
                 });
@@ -137,7 +136,8 @@ namespace OtobusumNerede.Api.Services
                     type = "MultiLineString",
                     coordinates = new List<List<List<double>>> { coordinates }
                 },
-                properties = new {
+                properties = new
+                {
                     Yon = rota.YON,
                     DeparNo = rota.DEPAR_NO
                 }

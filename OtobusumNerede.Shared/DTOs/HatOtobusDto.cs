@@ -16,6 +16,7 @@ namespace OtobusumNerede.Shared.DTOs
         public double Enlem { get; set; }
 
         public string HatKodu { get; set; }
+
         public string GuzergahKodu { get; set; }
 
         public string YonAdi { get; set; }

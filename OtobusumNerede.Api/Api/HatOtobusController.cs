@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using OtobusumNerede.Api.Data.ServicesModels;
 using OtobusumNerede.Api.Services;
 using OtobusumNerede.Api.Services.Interfaces;
 using OtobusumNerede.Shared.DTOs;
@@ -18,10 +19,10 @@ namespace OtobusumNerede.Api.Api
             _hatOtobusServices = hatOtobusServices;
         }
 
-        [HttpPost("GetHatOtobus/{hatKodu}/{httpClient}")]
-        public async Task<List<HatOtobusDto>> GetHatDurakByIdAsync(string hatKodu, HttpClient httpClient)
+        [HttpPost("GetHatOtobus")] 
+        public async Task<List<HatOtobusDto>> GetHatOtobusDtoAsync ([FromBody] List<GetHatOtoKonumJsonResultServiceModel> model)
         {
-            List<HatOtobusDto> hatOtobusDtoListesi = await _hatOtobusServices.HatOtobusBilgileriAsync(hatKodu,httpClient);
+            List<HatOtobusDto> hatOtobusDtoListesi = await _hatOtobusServices.HatOtobusBilgileriAsync(model);
             return hatOtobusDtoListesi;
         }
 
