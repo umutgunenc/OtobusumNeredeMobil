@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using AutoMapper;
 using DuyurularServices;
-using Microsoft.AspNetCore.Mvc;
 using OtobusumNerede.Api.Data.ServicesModels;
 using OtobusumNerede.Api.Services.Interfaces;
 using OtobusumNerede.Shared.DTOs;

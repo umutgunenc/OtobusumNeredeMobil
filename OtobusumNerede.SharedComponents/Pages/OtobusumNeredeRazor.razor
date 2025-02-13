@@ -20,7 +20,12 @@
 		else
 		{
 			<div class="col-md-12 my-4">
-				<select id="hatSelect" class="form-control" @onchange="HatDegisti">
+	
+
+
+
+
+				<datalist id="hatSelect" class="form-control" @onchange="HatDegisti">
 					@if (secilenHat == null)
 					{
 						<option value="" disabled selected>Lütfen bir hat seçin</option>
@@ -43,7 +48,7 @@
 						}
 					}
 					
-				</select>
+				</datalist>
 			</div>
 			@if (!SeferVarMi)
 			{
@@ -54,7 +59,7 @@
 			else
 			{
 				<div class="col-md-12 my-4 align-items-center">
-					<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;"></div>
+					<div id="map" style="height: 60vh; width: 95vh; margin: 0 auto;"></div>
 				</div>
 			}
 
@@ -214,14 +219,14 @@
 
 			// Durak ikonları
 			const durakIcon1 = L.icon({
-				iconUrl: '/icons/busStationBlue (2).svg',  // Sefer Yönü 1 için ikon
+				iconUrl: '/icons/busStationBlue_2.svg',  // Sefer Yönü 1 için ikon
 				iconSize: [32, 32],
 				iconAnchor: [16, 32],
 				popupAnchor: [0, -32]
 			});
 
 			const durakIcon2 = L.icon({
-				iconUrl: '/icons/busStationRed (2).svg',  // Sefer Yönü 0 için ikon
+				iconUrl: '/icons/busStationRed_2.svg',  // Sefer Yönü 0 için ikon
 				iconSize: [32, 32],
 				iconAnchor: [16, 32],
 				popupAnchor: [0, -32]

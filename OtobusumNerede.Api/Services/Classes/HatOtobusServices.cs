@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Xml.Serialization;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using OtobusumNerede.Api.Data;
 using OtobusumNerede.Api.Data.Entities.GeoJson;
 using OtobusumNerede.Api.Data.ServicesModels;

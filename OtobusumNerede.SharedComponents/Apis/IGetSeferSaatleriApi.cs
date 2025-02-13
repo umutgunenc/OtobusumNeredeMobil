@@ -2,7 +2,7 @@
 using OtobusumNerede.Shared.Enums;
 using Refit;
 
-namespace OtobusumNerede.Web.Apis
+namespace OtobusumNerede.Shared.Apis
 {
     public interface IGetSeferSaatleriApi
     {

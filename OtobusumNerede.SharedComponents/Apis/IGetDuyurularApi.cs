@@ -1,7 +1,7 @@
 ﻿using OtobusumNerede.Shared.DTOs;
 using Refit;
 
-namespace OtobusumNerede.Web.Apis
+namespace OtobusumNerede.Shared.Apis
 {
     public interface IGetDuyurularApi
     {

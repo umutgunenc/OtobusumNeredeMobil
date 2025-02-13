@@ -22,14 +22,25 @@ internal class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        //builder.Services.AddCors(options =>
+        //{
+        //    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+        //    options.AddDefaultPolicy(policy =>
+        //        policy.WithOrigins(allowedOrigins)
+        //              .AllowAnyHeader()
+        //              .AllowAnyMethod());
+        //});
+
         builder.Services.AddCors(options =>
         {
-            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
-            options.AddDefaultPolicy(policy =>
-                policy.WithOrigins(allowedOrigins)
-                      .AllowAnyHeader()
-                      .AllowAnyMethod());
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
         });
+
 
         builder.Services.AddDbContext<OtobusumNeredeDbContext>(options =>
         {
@@ -91,7 +102,7 @@ internal class Program
         }
         
         app.UseHttpsRedirection();
-        app.UseCors();
+        app.UseCors("AllowAll");
 
 
         app.MapControllers();
