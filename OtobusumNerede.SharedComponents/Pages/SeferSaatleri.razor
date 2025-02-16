@@ -3,7 +3,6 @@
 
 @inject IGetHatlarApi _getHatlarApi
 @inject IGetSeferSaatleriApi _getSeferSaatleriApi
-@inject ILocalStorageService _localStorage
 
 
 <div class="justify-content-center align-items-center text-center mt-4">
@@ -19,31 +18,21 @@
 
 
 			<div class="col-md-12 my-4">
-				@* 				<label for="hatSelect" class="form-label">Hat Kodu Seç:</label>
- *@				<select id="hatSelect" class="form-control" @onchange="HatDegisti">
-					@if (secilenHat == null)
-					{
-						<option value="" disabled selected>Lütfen bir hat seçin</option>
 
-					}
-					else
-					{
-						<option value=@secilenHat selected>@secilenHat</option>
+				<AutoCompleteComponent
+				TItem="HatDto"
+				Items="HatlarDto"
+				DisplayProperty="@(x=>x.HatKodu)"
+				Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
+				OnItemSelected="HatSecildi">
+				</AutoCompleteComponent>
 
-					}
-					@foreach (var hat in HatlarDto)
-					{
-						<option value="@hat.HatKodu">@hat.HatKodu</option>
-					}
-				</select>
 			</div>
-			@if (!string.IsNullOrEmpty(secilenHat))
+			@if (SecilenHat!=null)
 			{
 
-
 				<div class="col-md-12 my-4">
-					@* 					<label for="gunSelect" class="form-label">Gün Tipi Seç:</label>
- *@					<select class="form-control" @onchange="GunSecildi">
+					<select class="form-control" @onchange="GunSecildi">
 						@if (!gunSecildiMi)
 						{
 							<option value="" disabled selected>Gün Seçiniz</option>
@@ -164,7 +153,7 @@
 @code {
 
 	private bool gunSecildiMi = false;
-	private string secilenHat;
+	private HatDto SecilenHat;
 	private bool isBusy { get; set; } = true;
 	private bool showTable = false;
 
@@ -183,21 +172,19 @@
 		isBusy = false;
 	}
 
-	private async Task HatDegisti(ChangeEventArgs e)
+	private async Task HatSecildi(HatDto hat)
 	{
-		secilenHat = e.Value.ToString();
 		showTable = false;
-		await _localStorage.SetItemAsync("secilenHat", secilenHat);
 		gunSecildiMi = false;
+		SecilenHat = hat;
 	}
 	private async Task<bool> GunSecildi(ChangeEventArgs e)
 	{
 		isBusy = true;
 		Enum.TryParse<GunlerEnum>(e.Value?.ToString(), out var secilenGun);
-		SeferSaatleriListesi = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, secilenGun);
+		SeferSaatleriListesi = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(SecilenHat.HatKodu, secilenGun);
 		showTable = true;
 		isBusy = false;
-		secilenHat = await _localStorage.GetItemAsync<string>("secilenHat");
 		return gunSecildiMi = true;
 
 	}

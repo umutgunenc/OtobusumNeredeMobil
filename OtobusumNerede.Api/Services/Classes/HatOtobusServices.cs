@@ -7,9 +7,9 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using OtobusumNerede.Api.Data;
 using OtobusumNerede.Api.Data.Entities.GeoJson;
-using OtobusumNerede.Api.Data.ServicesModels;
 using OtobusumNerede.Api.Services.Interfaces;
 using OtobusumNerede.Shared.DTOs;
+using OtobusumNerede.Shared.UIServices.ServicesDataModel;
 
 namespace OtobusumNerede.Api.Services
 {
@@ -20,51 +20,103 @@ namespace OtobusumNerede.Api.Services
         private readonly IMapper _mapper;
         private readonly OtobusumNeredeDbContext _context;
 
-        public HatOtobusServices(HttpClient httpClient, List<HatOtobusDto> hatOtobusDto, IMapper mapper, OtobusumNeredeDbContext context) 
+        public HatOtobusServices(List<HatOtobusDto> hatOtobusDto, IMapper mapper, OtobusumNeredeDbContext context, HttpClient httpClient)
         {
-            _httpClient = httpClient;
             _hatOtobusDtoList = hatOtobusDto;
             _mapper = mapper;
             _context = context;
+            _httpClient = httpClient;
         }
 
 
-        public async Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(string hatKodu, HttpClient httpClient)
+        //public async Task<List<HatOtobusDto>> HatOtobusBilgileriAsync(string hatKodu)
+        //{
+        //    var url = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx?wsdl";
+
+        //    var soapRequest = $@"
+        //        <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
+        //           <soapenv:Header/>
+        //           <soapenv:Body>
+        //              <tem:GetHatOtoKonum_json>
+        //                 <!--Optional:-->
+        //                 <tem:HatKodu>{hatKodu}</tem:HatKodu>
+        //              </tem:GetHatOtoKonum_json>
+        //           </soapenv:Body>
+        //        </soapenv:Envelope>";
+
+        //    var content = new StringContent(soapRequest, Encoding.UTF8, "text/xml");
+
+        //    content.Headers.Add("SOAPAction", "http://tempuri.org/GetHatOtoKonum_json");
+        //    try
+        //    {
+
+        //        var response = await _httpClient.PostAsync(url, content);
+        //        var responseString = await response.Content.ReadAsStringAsync();
+
+        //        // Deserialize the XML response
+        //        var serializer = new XmlSerializer(typeof(SoapEnvelope));
+        //        var reader = new StringReader(responseString);
+        //        var soapEnvelope = (SoapEnvelope)serializer.Deserialize(reader);
+
+        //        var jsonContent = soapEnvelope.Body.GetHatOtoKonumJsonResponse.GetHatOtoKonumJsonResult;
+        //        Debug.WriteLine($"SOAP JSON Response: {jsonContent}");
+
+        //        var HatOtobusJsonServiceModel = JsonSerializer.Deserialize<List<GetHatOtoKonumJsonResultServiceModel>>(soapEnvelope.Body.GetHatOtoKonumJsonResponse.GetHatOtoKonumJsonResult);
+
+        //        if (HatOtobusJsonServiceModel == null || !HatOtobusJsonServiceModel.Any())
+        //        {
+        //            Debug.WriteLine("Deserialization sonucu boş geldi!");
+        //        }
+
+        //        foreach (var item in HatOtobusJsonServiceModel)
+        //        {
+        //            _hatOtobusDtoList.Add(new HatOtobusDto
+        //            {
+        //                Boylam = double.Parse(item.boylam),
+        //                Enlem = double.Parse(item.enlem),
+        //                GuzergahKodu = item.guzergahkodu,
+        //                HatKodu = item.hatkodu,
+        //                KapiNo = item.kapino,
+        //                KonumZamani = DateTime.Parse( item.son_konum_zamani),
+        //                YonAdi = item.yon    
+        //            });
+        //        }
+
+
+        //        var mappingList = _mapper.Map<List<HatOtobusDto>>(HatOtobusJsonServiceModel);
+
+        //        _hatOtobusDtoList = _mapper.Map<List<HatOtobusDto>>(HatOtobusJsonServiceModel);
+        //        reader.Close();
+
+        //        return _hatOtobusDtoList;
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine($"Hata oluştu: {ex.Message}");
+        //        return null;
+        //    }
+        //}
+
+        public List<HatOtobusDto> HatOtobusBilgileri(List<GetHatOtoKonumJsonResultServiceModel> model)
         {
-            var url = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx?wsdl";
-
-            var soapRequest = $@"
-                <soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:tem=""http://tempuri.org/"">
-                   <soapenv:Header/>
-                   <soapenv:Body>
-                      <tem:GetHatOtoKonum_json>
-                         <!--Optional:-->
-                         <tem:HatKodu>{hatKodu}</tem:HatKodu>
-                      </tem:GetHatOtoKonum_json>
-                   </soapenv:Body>
-                </soapenv:Envelope>";
-
-            var content = new StringContent(soapRequest, Encoding.UTF8, "text/xml");
-
-            content.Headers.Add("SOAPAction", "http://tempuri.org/GetHatOtoKonum_json");
             try
             {
+                //_hatOtobusDtoList = _mapper.Map<List<HatOtobusDto>>(model);
 
-                var response = await _httpClient.PostAsync(url, content);
-                var responseString = await response.Content.ReadAsStringAsync();
-
-                // Deserialize the XML response
-                var serializer = new XmlSerializer(typeof(SoapEnvelope));
-                var reader = new StringReader(responseString);
-                var soapEnvelope = (SoapEnvelope)serializer.Deserialize(reader);
-
-
-                var HatOtobusJsonServiceModel = JsonSerializer.Deserialize<List<GetHatOtoKonumJsonResultServiceModel>>(soapEnvelope.Body.GetHatOtoKonumJsonResponse.GetHatOtoKonumJsonResult);
-
-                _hatOtobusDtoList = _mapper.Map<List<HatOtobusDto>>(HatOtobusJsonServiceModel);
-                reader.Close();
-
-
+                foreach (var item in model)
+                {
+                    _hatOtobusDtoList.Add(new HatOtobusDto
+                    {
+                        Boylam = double.Parse(item.boylam),
+                        Enlem = double.Parse(item.enlem),
+                        GuzergahKodu = item.guzergahkodu,
+                        HatKodu = item.hatkodu,
+                        KapiNo = item.kapino,
+                        KonumZamani = DateTime.Parse(item.son_konum_zamani),
+                        YonAdi = item.yon
+                    });
+                }
                 return _hatOtobusDtoList;
 
             }
@@ -74,14 +126,13 @@ namespace OtobusumNerede.Api.Services
                 return null;
             }
         }
-
         public async Task<List<object>> HatGeoJsonBilgileriAsync(List<string> guzergahKodlari)
         {
             var query = _context.OtobusRotalari
                 .Where(x => guzergahKodlari.Contains(x.GUZERGAH_K) && x.DURUM == "AKTİF")
                 .Select(x => new OtobusRotasi
                 {
-                    RouteGeometry = x.RouteGeometry, 
+                    RouteGeometry = x.RouteGeometry,
                     YON = x.YON,
                     DEPAR_NO = x.DEPAR_NO
                 });
@@ -136,7 +187,8 @@ namespace OtobusumNerede.Api.Services
                     type = "MultiLineString",
                     coordinates = new List<List<List<double>>> { coordinates }
                 },
-                properties = new {
+                properties = new
+                {
                     Yon = rota.YON,
                     DeparNo = rota.DEPAR_NO
                 }

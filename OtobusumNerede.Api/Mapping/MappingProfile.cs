@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
 using AutoMapper;
 using DuyurularServices;
 using OtobusumNerede.Api.Data.Entities;
@@ -58,15 +59,14 @@ namespace OtobusumNerede.Api.Mapping
 
                 });
 
-            CreateMap<GetHatOtoKonumJsonResultServiceModel, HatOtobusDto>()
-                .ForMember(dest => dest.HatKodu, src => src.MapFrom(src => src.hatkodu))
-                .ForMember(dest => dest.Boylam, src => src.MapFrom(src => src.boylam))
-                .ForMember(dest => dest.Enlem, src => src.MapFrom(src => src.enlem))
-                .ForMember(dest => dest.KapiNo, src => src.MapFrom(src => src.kapino))
-                .ForMember(dest => dest.YonAdi, src => src.MapFrom(src => src.yon))
-                .ForMember(dest=>dest.GuzergahKodu, src => src.MapFrom(src => src.guzergahkodu))
-                .ForMember(dest=>dest.KonumZamani, src => src.MapFrom(src =>DateTime.Parse(src.son_konum_zamani)));
-
+            //CreateMap<GetHatOtoKonumJsonResultServiceModel, HatOtobusDto>()
+            //    .ForMember(dest => dest.HatKodu, src => src.MapFrom(src => src.hatkodu))
+            //    .ForMember(dest => dest.Boylam, src => src.MapFrom(src => src.boylam))
+            //    .ForMember(dest => dest.Enlem, src => src.MapFrom(src => src.enlem))
+            //    .ForMember(dest => dest.KapiNo, src => src.MapFrom(src => src.kapino))
+            //    .ForMember(dest => dest.YonAdi, src => src.MapFrom(src => src.yon))
+            //    .ForMember(dest => dest.GuzergahKodu, src => src.MapFrom(src => src.guzergahkodu))
+            //    .ForMember(dest => dest.KonumZamani, src => src.MapFrom(src => DateTime.Parse(src.son_konum_zamani)));
 
             CreateMap<DuraklarJsonModel, DuyurularDto>()
                 .ForMember(dest => dest.DuyuruBasligi, src => src.MapFrom(src => src.HATKODU + " / " + src.HAT))

@@ -1,0 +1,102 @@
+﻿@using System.Linq.Expressions
+@typeparam TItem
+
+<div class="autocomplete-container">
+    <div class="card">
+        <div class="card-header">
+            <input type="text" @bind="SearchText" @bind:event="oninput" placeholder="@Placeholder" class="form-control" />
+        </div>
+        @if (IsListVisible && FilteredItems.Any())
+        {
+            <div class="" style="max-height:200px; overflow-y: scroll;">
+                <ul class="list-group list-group-flush autocomplete-list">
+                @foreach (var item in FilteredItems)
+                {
+                    <li value= class="list-group-item list-group-item-action autocomplete-item" @onclick="() => SelectItem(item)">
+                        @GetDisplayValue(item)
+                    </li>
+                }
+                </ul>
+            </div>
+
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<TItem> Items { get; set; } = new();
+
+    [Parameter]
+    public Expression<Func<TItem, object>> DisplayProperty { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = "Ara...";
+
+    [Parameter]
+    public EventCallback<TItem> OnItemSelected { get; set; }
+
+    private string _searchText = "";
+    private string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            OnSearchTextChanged(value);
+        }
+    }
+
+    private List<TItem> FilteredItems { get; set; } = new();
+    private bool IsListVisible { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        FilteredItems = new List<TItem>(Items);
+    }
+
+    private void ShowList()
+    {
+        IsListVisible = true;
+    }
+
+    private async Task HideList()
+    {
+        IsListVisible = false;
+        StateHasChanged();
+    }
+
+    private async Task SelectItem(TItem item)
+    {
+        SearchText = GetDisplayValue(item);
+        IsListVisible = false;
+
+        await OnItemSelected.InvokeAsync(item);
+
+    }
+
+    private void OnSearchTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            FilteredItems = new List<TItem>(Items);
+            IsListVisible = false;
+        }
+        else
+        {
+            FilteredItems = Items.Where(x => GetDisplayValue(x).Contains(value, StringComparison.OrdinalIgnoreCase)).ToList();
+            IsListVisible = true;
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetDisplayValue(TItem item)
+    {
+        if (DisplayProperty == null)
+            return item?.ToString() ?? string.Empty;
+
+        var func = DisplayProperty.Compile();
+        return func(item)?.ToString() ?? string.Empty;
+    }
+}

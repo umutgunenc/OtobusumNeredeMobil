@@ -5,8 +5,7 @@
 @inject IGetHatOtobusApi _getHatOtobusApi
 @inject IGetSeferSaatleriApi _getSeferSaatleriApi
 @inject ILocalStorageService _localStorage
-@inject HttpClient _httpClient
-
+@inject IHatOtobusServices _hatOtobusServices
 
 
 <div class="justify-content-center align-items-center text-center mt-4">
@@ -20,49 +19,37 @@
 		else
 		{
 			<div class="col-md-12 my-4">
-	
+				<AutoCompleteComponent 
+					TItem="HatDto"
+					Items="HatlarDto"
+					Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
+					DisplayProperty="@(x => x.HatKodu)"
+					OnItemSelected="SecilenHatiGetir" />
 
-
-
-
-				<datalist id="hatSelect" class="form-control" @onchange="HatDegisti">
-					@if (secilenHat == null)
+				@if (!seferVarMi)
+				{
+					<h2 class="col-md-12 my-4 align-items-center alert alert-danger" role="alert">
+						Sefer Bulunamadı
+					</h2>
+				}
+				else
+				{
+					if(SecilenHat!=null)
 					{
-						<option value="" disabled selected>Lütfen bir hat seçin</option>
-						@foreach (var hat in HatlarDto)
-						{
-							<option value="@hat.HatKodu">@hat.HatKodu</option>
-						}
+						<h3 class="mx-3 my-4">@SecilenHat.HatKoduAdi</h3>
+						<hr />
 					}
-					else
-					{
-						<option value="" disabled selected>Lütfen bir hat seçin</option>
+					<div class="col-md-12 my-4 align-items-center">
+@* 									<div id="map" class="w-100 mx-auto"></div>
+ *@
+						<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;" class="w-100 mx-auto"></div>
+					</div>
+@* 					<div class="d-flex justify-content-center">
+						<div id="map" class="w-100 mx-auto"></div>
+					</div> *@
+				}
 
-						@foreach (var hat in HatlarDto)
-						{
-							if(secilenHat==hat.HatKodu){
-								<option value="@hat.HatKodu" selected>@hat.HatKodu</option>
-							}else{
-								<option value="@hat.HatKodu">@hat.HatKodu</option>
-							}
-						}
-					}
-					
-				</datalist>
 			</div>
-			@if (!SeferVarMi)
-			{
-				<h2 class="col-md-12 my-4 align-items-center alert alert-danger" role="alert">
-					Sefer Bulunamadı
-				</h2>
-			}
-			else
-			{
-				<div class="col-md-12 my-4 align-items-center">
-					<div id="map" style="height: 60vh; width: 95vh; margin: 0 auto;"></div>
-				</div>
-			}
-
 
 		}
 	</div>
@@ -70,17 +57,16 @@
 
 
 @code {
-
-	private string secilenHat;
-	private bool isBusy { get; set; } = true;
-
+	private Timer _timer;
+	private HatDto SecilenHat;
 	private List<HatDto> HatlarDto = new();
 	private List<HatDurakDto> HatlarDuraklarDto = new();
 	private List<HatOtobusDto> HatlarOtobuslerDto = new();
-	private Timer _timer;
-	private List<string> guzargahKodlari { get; set; } = new();
+	private List<string> GuzargahKoordinatlari { get; set; } = new();
 	private List<object> GeoJsonListesi { get; set; } = new();
-	private bool SeferVarMi { get; set; } = true;
+	private List<GetHatOtoKonumJsonResultServiceModel> JsonOtobusKonumlari { get; set; } = new();
+	private bool seferVarMi { get; set; } = true;
+	private bool isBusy { get; set; } = true;
 
 
 	protected override async Task OnInitializedAsync()
@@ -89,24 +75,38 @@
 		isBusy = false;
 	}
 
-	private async Task HatDegisti(ChangeEventArgs e)
+	private async Task SecilenHatiGetir(HatDto hat)
 	{
-		SeferVarMi = true;
+		SecilenHat = hat;
+		await HatDegisti(hat);
+	}
+
+	private async Task HatDegisti(HatDto hat)
+	{
+		seferVarMi = true;
 		isBusy = true;
-		secilenHat = e.Value.ToString();
-		HatlarDuraklarDto = await _getHatDurakApi.GetHatDurakById(secilenHat);
-		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
-		if (HatlarOtobuslerDto.Count == 0)
+		HatlarDuraklarDto = await _getHatDurakApi.GetHatDurakById(hat.HatKodu);
+		JsonOtobusKonumlari = await _hatOtobusServices.HatOtobusBilgileriAsync(hat.HatKodu);
+
+		if (JsonOtobusKonumlari.Count == 0)
 		{
-			SeferVarMi = false;
+			seferVarMi = false;
 			isBusy = false;
 			await InvokeAsync(StateHasChanged);
 			return;
 		}
+
+		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(JsonOtobusKonumlari);
+
+
+
+		// HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(SecilenHat.HatKodu, _httpClient);
+
+	
 		GunlerEnum gun = GetGunlerEnum();
 		// SeferSaatleriDto = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, gun);
-		guzargahKodlari = GuzergahKodlariniGetir(HatlarOtobuslerDto);
-		GeoJsonListesi = await _getHatOtobusApi.GuzergahBilgileriAsync(guzargahKodlari);
+		GuzargahKoordinatlari = GuzergahKodlariniGetir(HatlarOtobuslerDto);
+		GeoJsonListesi = await _getHatOtobusApi.GuzergahBilgileriAsync(GuzargahKoordinatlari);
 		isBusy = false;
 
 		await InvokeAsync(StateHasChanged); // Ensure the UI is updated before rendering the map
@@ -120,19 +120,19 @@
 
 	private List<string> GuzergahKodlariniGetir(List<HatOtobusDto> HatlarOtobuslerDto)
 	{
-		if (guzargahKodlari.Count > 0)
-			guzargahKodlari.Clear();
+		if (GuzargahKoordinatlari.Count > 0)
+			GuzargahKoordinatlari.Clear();
 		foreach (var hatOtobus in HatlarOtobuslerDto)
 		{
-			if (!guzargahKodlari.Contains(hatOtobus.GuzergahKodu))
-				guzargahKodlari.Add(hatOtobus.GuzergahKodu);
+			if (!GuzargahKoordinatlari.Contains(hatOtobus.GuzergahKodu))
+				GuzargahKoordinatlari.Add(hatOtobus.GuzergahKodu);
 		}
 		foreach (var hatOtobus in HatlarOtobuslerDto)
 		{
-			if (!guzargahKodlari.Contains(hatOtobus.GuzergahKodu))
-				guzargahKodlari.Add(hatOtobus.GuzergahKodu);
+			if (!GuzargahKoordinatlari.Contains(hatOtobus.GuzergahKodu))
+				GuzargahKoordinatlari.Add(hatOtobus.GuzergahKodu);
 		}
-		return guzargahKodlari;
+		return GuzargahKoordinatlari;
 	}
 
 
@@ -164,7 +164,11 @@
 
 	private async Task UpdateOtobusKonumlari()
 	{
-		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(secilenHat, _httpClient);
+		JsonOtobusKonumlari = await _hatOtobusServices.HatOtobusBilgileriAsync(SecilenHat.HatKodu);
+
+		// HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(SecilenHat.HatKodu);
+		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(JsonOtobusKonumlari);
+
 		await JS.InvokeVoidAsync("updateBusPositions", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
 	}
 
@@ -202,7 +206,7 @@
 			}).addTo(map);
 
 			// Kullanıcının konumunu bulma
-			map.locate({ setView: true, maxZoom: 20 });
+			map.locate({ setView: true, maxZoom: 22 });
 
 			// Kullanıcı konumu alındığında yapılacak işlemler
 			map.on('locationfound', function (e) {
@@ -253,20 +257,6 @@
 				routeLayers.forEach(layer => map.removeLayer(layer));
 			}
 			routeLayers = [];
-
-			// // Rotaları GeoJSON formatında haritaya ekleme
-			// rotalar.forEach(rota => {
-			// 	const geoJsonLayer = L.geoJSON(rota, {
-			// 		style: {
-			// 			color: 'red',    // Rota rengi kırmızı
-			// 			weight: 4,       // Çizgi kalınlığı
-			// 			opacity: 0.8     // Saydamlık
-			// 		}
-			// 	}).addTo(map);
-
-			// 	// Rotaları saklama (sonradan silmek için)
-			// 	routeLayers.push(geoJsonLayer);
-			// });
 
 			rotalar.forEach(rota => {
 				// Renk belirleme fonksiyonu

@@ -19,7 +19,14 @@
 			<div class="col mx-4">
 
 				<div class="my-3">
-					<select class="form-select" aria-label="Default select example" @onchange="HatDegisti">
+
+					<AutoCompleteComponent TItem="HatDto"
+										   Items="HatlarListesi"
+										   Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
+										   DisplayProperty="@(x => x.HatKodu)"
+										   OnItemSelected="SecilenHatiGetir" />
+
+@* 					<select class="form-select" aria-label="Default select example" @onchange="HatDegisti">
 						@if (SecilenHat == null)
 						{
 							<option selected value="">Hepsini Göster</option>
@@ -36,7 +43,7 @@
 								<option selected value="@hat.HatKodu">@hat.HatKoduAdi</option>
 							}
 						}
-					</select>
+					</select> *@
 				</div>
 				@if (DuyurularListesi.Count == 0)
 				{
@@ -95,6 +102,7 @@
 	{
 		DuyurularListesi = await _getDuyurularApi.GetDuyurularAsync();
 		HatlarListesi = await _getHatlarApi.GetHatlarDtoAsync();
+		HatlarListesi.Insert(0, new HatDto { HatKodu = "", HatKoduAdi = "Hepsini Göster" });
 		isBusy = false;
 	}
 
@@ -109,10 +117,16 @@
 		modal.Close();
 	}
 
-	private async Task HatDegisti(ChangeEventArgs e)
+	private async Task SecilenHatiGetir(HatDto hat)
+	{
+		SecilenHat = hat;
+		await HatDegisti(hat);
+	}
+
+	private async Task HatDegisti(HatDto hat)
 	{
 		isBusy = true;
-		var secilenHat = e.Value.ToString();
+		var secilenHat = hat.HatKodu;
 		DuyurularListesi = await _getDuyurularApi.GetDuyurularAsync();
 
 		SecilenHat = HatlarListesi.FirstOrDefault(x => x.HatKodu == secilenHat);

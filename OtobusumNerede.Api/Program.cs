@@ -46,7 +46,15 @@ internal class Program
         {
             options.UseSqlServer(
                 builder.Configuration.GetConnectionString("DatabaseConnection"),
-                sqlOptions => sqlOptions.CommandTimeout(600)
+                sqlOptions =>
+                {
+                    sqlOptions.CommandTimeout(600); // Komut zaman aşımı süresi (saniye cinsinden)
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5, // Maksimum yeniden deneme sayısı
+                        maxRetryDelay: TimeSpan.FromSeconds(30), // Yeniden denemeler arası maksimum bekleme süresi
+                        errorNumbersToAdd: null // İsteğe bağlı: Belirli hata numaraları için yeniden deneme
+                    );
+                }
             );
         });
 
