@@ -1,4 +1,6 @@
 ﻿@page "/OtobusumNerede"
+@using OtobusumNerede.Shared.Services.Interfaces
+@using OtobusumNerede.Shared.ServicesDataModels
 
 @inject IGetHatlarApi _getHatlarApi
 @inject IGetHatDurakApi _getHatDurakApi
@@ -6,6 +8,11 @@
 @inject IGetSeferSaatleriApi _getSeferSaatleriApi
 @inject ILocalStorageService _localStorage
 @inject IHatOtobusServices _hatOtobusServices
+@inject IKonumServices _konumServices
+@inject IUyariServices _uyariServices
+@inject ICihazServices _cihazServices
+@inject IIzinServices _izinServices
+
 
 
 <div class="justify-content-center align-items-center text-center mt-4">
@@ -18,13 +25,26 @@
 		}
 		else
 		{
+			@if (Konum != null)
+			{
+				<h3>
+					Konum : @Konum.Longitude, @Konum.Latitude
+				</h3>
+			}
+			else
+			{
+				<h3>
+					Konum Bilgisi Alınamadı
+				</h3>
+			}
+
+			<hr />
 			<div class="col-md-12 my-4">
-				<AutoCompleteComponent 
-					TItem="HatDto"
-					Items="HatlarDto"
-					Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
-					DisplayProperty="@(x => x.HatKodu)"
-					OnItemSelected="SecilenHatiGetir" />
+				<AutoCompleteComponent TItem="HatDto"
+									   Items="HatlarDto"
+									   Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
+									   DisplayProperty="@(x => x.HatKodu)"
+									   OnItemSelected="SecilenHatiGetir" />
 
 				@if (!seferVarMi)
 				{
@@ -34,17 +54,17 @@
 				}
 				else
 				{
-					if(SecilenHat!=null)
+					if (SecilenHat != null)
 					{
 						<h3 class="mx-3 my-4">@SecilenHat.HatKoduAdi</h3>
 						<hr />
 					}
 					<div class="col-md-12 my-4 align-items-center">
-@* 									<div id="map" class="w-100 mx-auto"></div>
+						@* 									<div id="map" class="w-100 mx-auto"></div>
  *@
 						<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;" class="w-100 mx-auto"></div>
 					</div>
-@* 					<div class="d-flex justify-content-center">
+					@* 					<div class="d-flex justify-content-center">
 						<div id="map" class="w-100 mx-auto"></div>
 					</div> *@
 				}
@@ -67,12 +87,30 @@
 	private List<GetHatOtoKonumJsonResultServiceModel> JsonOtobusKonumlari { get; set; } = new();
 	private bool seferVarMi { get; set; } = true;
 	private bool isBusy { get; set; } = true;
+	private KonumResult KonumSonucu { get; set; }
+	private Location Konum { get; set; }
 
 
 	protected override async Task OnInitializedAsync()
 	{
 		HatlarDto = await _getHatlarApi.GetHatlarDtoAsync();
+		KonumSonucu = await _konumServices.KonumBilgisiniAlAsync();
+		// if (KonumSonucu.IzinVarMi)
+		// {
+		// 	bool gpsAcikMi= await _cihazServices.GpsAcikMiAsync();
+		// 	if(!gpsAcikMi){
+		// 		await _uyariServices.GpsUyarisiniGosterAsync();
+		// 		isBusy = false;
+		// 		Konum = null;
+		// 		return;
+		// 	}
+		// 	Konum = KonumSonucu.Konum;
+		// }
+		// else{
+		// }
+		Konum = KonumSonucu.Konum;
 		isBusy = false;
+
 	}
 
 	private async Task SecilenHatiGetir(HatDto hat)
@@ -102,7 +140,7 @@
 
 		// HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(SecilenHat.HatKodu, _httpClient);
 
-	
+
 		GunlerEnum gun = GetGunlerEnum();
 		// SeferSaatleriDto = await _getSeferSaatleriApi.GetSeferSaatiByIdAsync(secilenHat, gun);
 		GuzargahKoordinatlari = GuzergahKodlariniGetir(HatlarOtobuslerDto);

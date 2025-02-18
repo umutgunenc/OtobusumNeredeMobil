@@ -135,6 +135,9 @@ using Security;
 using Xamarin.Android.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using OtobusumNerede.Shared.Services.Interfaces;
+using OtobusumNerede.Shared.Services;
+using Android.Locations;
 #endif
 
 namespace OtobusumNerede.Mobile
@@ -165,6 +168,13 @@ namespace OtobusumNerede.Mobile
 
             builder.Services.AddBlazorBootstrap();
 
+#if ANDROID
+            builder.Services.AddSingleton<IIzinServices, IzinService>();
+            builder.Services.AddSingleton<IUyariServices, UyariService>();
+            builder.Services.AddSingleton<ICihazServices, CihazServiceAndroid>();
+            builder.Services.AddSingleton<IKonumServices, KonumServices>();
+            builder.Services.AddSingleton<LocationRequest>();
+#endif
             ConfigureRefit(builder.Services);
 
             return builder.Build();
@@ -204,7 +214,8 @@ namespace OtobusumNerede.Mobile
             {
 #if DEBUG
                 return DeviceInfo.Platform == DevicePlatform.Android
-                    ? "https://10.0.2.2:7048"
+                    //? "https://10.0.2.2:7048"
+                    ? "https://otobusumnerede.runasp.net/"
                     : "https://localhost:7048";
 #else
                 return "https://otobusumnerede.runasp.net/"; // Production URL
