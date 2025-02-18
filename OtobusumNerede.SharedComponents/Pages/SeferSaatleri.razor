@@ -5,8 +5,7 @@
 @inject IGetSeferSaatleriApi _getSeferSaatleriApi
 
 
-<div class="justify-content-center align-items-center text-center mt-4">
-	<h3 class="mx-3">Sefer Saatleri</h3>
+	<h3 class="fw-bold pt-3" style="color:#4CAF50">Sefer Saatleri</h3>
 
 	<div class="row mb-3 m-2">
 		@if (isBusy)
@@ -54,12 +53,12 @@
 			{
 				if (SeferSaatleriListesi.GidisSeferleri.Count == 0 && SeferSaatleriListesi.DonusSeferleri.Count == 0)
 				{
-					<h3 class="my-3">Aranılan Güzergahta Sefer Bulunamadı</h3>
+				<h3 class="fw-bold pt-3" style="color:#4CAF50">Aranılan Güzergahta Sefer Bulunamadı</h3>
 				}
 				else
 				{
-					<div class="table-container p-2 my-3">
-						<table class="table table-light table-hover table-bordered">
+					<div class="table-container p-2 my-3" style="position:absolute">
+					<table class="table table-info table-hover table-bordered">
 							<thead class="thead-dark">
 								<tr>
 									<th colspan="4" class="text-center">
@@ -146,7 +145,6 @@
 		}
 	</div>
 
-</div>
 
 
 

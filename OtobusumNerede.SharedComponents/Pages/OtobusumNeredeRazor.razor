@@ -15,67 +15,66 @@
 
 
 
-<div class="justify-content-center align-items-center text-center mt-4">
-	<h3 class="mx-3">Otobusum Nerede</h3>
+@* <div class="container justify-content-center align-items-center text-center pt-4">
+ *@	<h3 class="fw-bold pt-3" style="color:#4CAF50">Otobusum Nerede</h3>
 
-	<div class="row mb-3 m-2">
+	<div class="row  mx-2">
 		@if (isBusy)
 		{
 			<IsBusyComponent />
 		}
 		else
 		{
-			@if (Konum != null)
-			{
-				<h3>
-					Konum : @Konum.Longitude, @Konum.Latitude
-				</h3>
-			}
-			else
-			{
-				<h3>
-					Konum Bilgisi Alınamadı
-				</h3>
-			}
-
-			<hr />
 			<div class="col-md-12 my-4">
 				<AutoCompleteComponent TItem="HatDto"
-									   Items="HatlarDto"
-									   Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
-									   DisplayProperty="@(x => x.HatKodu)"
-									   OnItemSelected="SecilenHatiGetir" />
+				Items="HatlarDto"
+				Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
+				DisplayProperty="@(x => x.HatKodu)"
+				OnItemSelected="SecilenHatiGetir" />
 
+				@if (SecilenHat != null)
+				{
+				<h3 class="my-4 fw-bold text-warning">@SecilenHat.HatKoduAdi</h3>
+				<hr />
+				}
 				@if (!seferVarMi)
 				{
 					<h2 class="col-md-12 my-4 align-items-center alert alert-danger" role="alert">
 						Sefer Bulunamadı
 					</h2>
 				}
-				else
+				else 
 				{
-					if (SecilenHat != null)
-					{
-						<h3 class="mx-3 my-4">@SecilenHat.HatKoduAdi</h3>
-						<hr />
-					}
-					<div class="col-md-12 my-4 align-items-center">
-						@* 									<div id="map" class="w-100 mx-auto"></div>
- *@
-						<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;" class="w-100 mx-auto"></div>
+
+					<div class="col-md-12 my-4 align-items-center"  style="position:relative @(!seferVarMi ? "display:none" : "")">
+						<div id="map" style="height: 60vh; width: 95vw; margin: 0 auto;border-radius:1rem; " class="w-100 mx-auto">
+
+						</div>
+						<button @onclick=UpdateKullaniciKonumu style="
+										position: absolute;
+										bottom: 6vh;
+										right: 10vw;
+										background: rgba(0,0,0,0.6);
+										border: 3px solid rgba(255,255,255,0.9);
+										border-radius: 50%;
+										width: 50px;
+										height: 50px;
+										font-size: 24px;
+										cursor: pointer;
+										z-index: 1000; 
+						">
+						</button>
 					</div>
-					@* 					<div class="d-flex justify-content-center">
-						<div id="map" class="w-100 mx-auto"></div>
-					</div> *@
+
 				}
+
 
 			</div>
 
 		}
 	</div>
-</div>
-
-
+@* </div>
+ *@
 @code {
 	private Timer _timer;
 	private HatDto SecilenHat;
@@ -95,7 +94,12 @@
 	{
 		HatlarDto = await _getHatlarApi.GetHatlarDtoAsync();
 		KonumSonucu = await _konumServices.KonumBilgisiniAlAsync();
+		if (KonumSonucu.Konum == null){
+			Konum.Latitude = 41.04601630167837;
+			Konum.Longitude = 29.033691108068265;
+		}
 		Konum = KonumSonucu.Konum;
+
 		isBusy = false;
 	}
 
@@ -127,8 +131,8 @@
 		GeoJsonListesi = await _getHatOtobusApi.GuzergahBilgileriAsync(GuzargahKoordinatlari);
 		isBusy = false;
 
-		await InvokeAsync(StateHasChanged); // Ensure the UI is updated before rendering the map
-		await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi);
+		await InvokeAsync(StateHasChanged); 
+		await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi, Konum);
 
 		if (_timer != null)
 			_timer.Dispose();
@@ -185,22 +189,30 @@
 
 		HatlarOtobuslerDto = await _getHatOtobusApi.HatOtobusBilgileriAsync(JsonOtobusKonumlari);
 
-		await JS.InvokeVoidAsync("updateBusPositions", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
+		await JS.InvokeVoidAsync("updateBusPositions", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi, Konum);
 	}
 
-	private async Task<Location> UpdateKullaniciKonumu()
+	private async Task UpdateKullaniciKonumu()
 	{
-		KonumSonucu = await _konumServices.KonumBilgisiniAlAsync();
-		Konum = KonumSonucu.Konum;
-		await InvokeAsync(StateHasChanged);
-		return Konum; 
-	}
 
+		KonumSonucu = await _konumServices.KonumBilgisiniAlAsync();
+		if (KonumSonucu.Konum == null)
+		{
+			Konum.Latitude = 41.04601630167837;
+			Konum.Longitude = 29.033691108068265;
+		}
+		Konum = KonumSonucu.Konum;
+
+		await InvokeAsync(StateHasChanged);
+		await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi, Konum);
+
+	}
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender && HatlarDuraklarDto.Any())
 		{
-			await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, HatlarOtobuslerDto);
+			await JS.InvokeVoidAsync("renderMap", HatlarDuraklarDto, HatlarOtobuslerDto, GeoJsonListesi, Konum);
+
 		}
 	}
 }
@@ -213,37 +225,25 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
 <script>
-		// Haritayı ve işaretçileri tutmak için global değişkenler
 	let map;
 	let busMarkers = [];
-	let routeLayers = []; // Rota katmanlarını saklamak için
+	let routeLayers = []; 
 
-	window.renderMap = (duraklar, otobusler, rotalar) => {
+	window.renderMap = (duraklar, otobusler, rotalar,konum) => {
 		const mapContainer = document.getElementById('map');
 
 		if (mapContainer && !mapContainer._leaflet_map) {
 			// Haritayı oluştur
-			map = L.map('map').setView([40.954977, 29.094129], 13); // Başlangıç merkezi
+			map = L.map('map').setView([41.04601630167837, 29.033691108068265], 13); // Başlangıç merkezi
 
 			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				attribution: '&copy; OpenStreetMap contributors'
 			}).addTo(map);
 
-			// Kullanıcının konumunu bulma
-			map.locate({ setView: true, maxZoom: 22 });
+			console.log(konum);
+			map.setView([konum.latitude,konum.longitude], 16);
 
-			// Kullanıcı konumu alındığında yapılacak işlemler
-			map.on('locationfound', function (e) {
-				map.setView(e.latlng, 16); // Kullanıcının konumuna odaklan
-				L.marker(e.latlng) // Kullanıcı konumu marker'ı
-					.bindPopup("Buradasınız!")
-					.addTo(map);
-			});
-
-			// Kullanıcı konumu bulunamadığında yapılacak işlemler
-			map.on('locationerror', function (e) {
-				alert("Konum alınamadı. Lütfen konum erişimine izin verin.");
-			});
+			L.marker([konum.latitude, konum.longitude]).addTo(map).bindPopup("Şu an buradasınız!").openPopup();
 
 			// Durak ikonları
 			const durakIcon1 = L.icon({

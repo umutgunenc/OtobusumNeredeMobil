@@ -154,12 +154,16 @@ namespace OtobusumNerede.Mobile
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
+            // Static dosyaları aktifleştir
             builder.Services.AddMauiBlazorWebView();
-
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
             builder.Logging.AddDebug();
+
 #endif
+
+
+            builder.Services.AddBlazorWebViewDeveloperTools();
 
             builder.Services.AddBlazoredLocalStorage();
 
@@ -167,6 +171,7 @@ namespace OtobusumNerede.Mobile
                 .ConfigurePrimaryHttpMessageHandler(() => CreatePlatformMessageHandler());
 
             builder.Services.AddBlazorBootstrap();
+
 
 #if ANDROID
             builder.Services.AddSingleton<IIzinServices, IzinService>();
