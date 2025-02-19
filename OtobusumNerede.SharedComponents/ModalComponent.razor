@@ -2,7 +2,7 @@
 
 <div class="@htmlClass" @ref="modalElement" tabindex="-1" role="dialog" style="display:@display">
     <div class="modal-dialog modal-fullscreen" role="document">
-        <div class="modal-content">
+        <div class="modal-content" style="background-color:#1a1a1a">
             <div class="modal-header m-3">
                 <h5 class="modal-title">@Title</h5>
 @*                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="Close"></button>
@@ -10,6 +10,7 @@
             <div class="modal-body m-3">
                 @ChildContent
             </div>
+            <hr />
             <div class="modal-footer m-3">
                 @FooterContent
             </div>

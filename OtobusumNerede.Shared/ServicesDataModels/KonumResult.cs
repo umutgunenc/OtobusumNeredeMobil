@@ -10,8 +10,8 @@ namespace OtobusumNerede.Shared.ServicesDataModels
     public class KonumResult
     {
         public bool IzinVarMi { get; set; }
-        public Location Konum { get; set; }
-        public string Mesaj { get; set; }
+        public Location? Konum { get; set; }
+        public string? Mesaj { get; set; }
 
         public static KonumResult IzinVerildi(Location konum)
         {

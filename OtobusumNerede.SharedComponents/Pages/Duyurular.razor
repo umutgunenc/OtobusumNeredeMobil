@@ -6,44 +6,28 @@
 @inject IGetHatlarApi _getHatlarApi
 @inject ILocalStorageService _localStorage
 
-<div class="justify-content-center align-items-center text-center pt-4">
-	<h3 class="mx-3">Duyurular</h3>
+<div class="justify-content-center align-items-center text-center">
+	<h3 class="">Duyurular</h3>
 
-	<div class="row mb-3 m-2">
+	<div class="row mb-3">
 		@if (isBusy)
 		{
 			<IsBusyComponent />
 		}
 		else
 		{
-			<div class="col mx-4">
+			<div class="col">
 
 				<div class="my-3">
 
 					<AutoCompleteComponent TItem="HatDto"
 										   Items="HatlarListesi"
-										   Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
-										   DisplayProperty="@(x => x.HatKodu)"
-										   OnItemSelected="SecilenHatiGetir" />
+										   SelectedItem="SecilenHat"
+										   SelectedItemChanged="SecilenHatiGetir"
+										   StaticPlaceholder="Hat Kodunu Giriniz"
+										   DisplayProperty="@(x => x.HatKoduAdi)">
+					</AutoCompleteComponent>
 
-@* 					<select class="form-select" aria-label="Default select example" @onchange="HatDegisti">
-						@if (SecilenHat == null)
-						{
-							<option selected value="">Hepsini Göster</option>
-						}
-						else
-						{
-							<option value="">Hepsini Göster</option>
-						}
-						@foreach (var hat in HatlarListesi)
-						{	
-							<option value="@hat.HatKodu">@hat.HatKoduAdi</option>
-							if (SecilenHat != null && hat.HatKodu == SecilenHat.HatKodu)
-							{
-								<option selected value="@hat.HatKodu">@hat.HatKoduAdi</option>
-							}
-						}
-					</select> *@
 				</div>
 				@if (DuyurularListesi.Count == 0)
 				{
@@ -67,8 +51,6 @@
 						</div>
 					}
 				}
-
-
 			</div>
 		}
 	</div>
@@ -77,13 +59,28 @@
 <!-- Modal Component -->
 <ModalComponent @ref="modal" Title="Duyuru Detayı">
 	<ModalBody>
-		<p><strong>Başlık:</strong> @secilenDuyuru?.DuyuruBasligi</p>
-		<p><strong>Tip:</strong> @secilenDuyuru?.DuyuruTipi</p>
-		<p><strong>Saat:</strong> @secilenDuyuru?.DuyuruSaati</p>
-		<p><strong>Mesaj:</strong> @secilenDuyuru?.DuyuruMesaji</p>
+		<div class="text-start">
+			<p><strong>@secilenDuyuru?.DuyuruBasligi</strong></p>
+		</div>		
+		<div class="text-start">
+			<p>
+				<strong>Duyuru Tipi:</strong> 
+				<span class="text-white-50">@secilenDuyuru?.DuyuruTipi</span>
+			</p>
+		</div>	
+		<div class="text-start">
+			<p>
+				<strong>Duyuru Saati:</strong>
+				<span class="text-white-50"> @secilenDuyuru?.DuyuruSaati</span>
+			</p>
+		</div>	
+		<div class="text-start">
+			<span class="text-white-50"> @secilenDuyuru?.DuyuruMesaji</span>
+		</div>
 	</ModalBody>
+	<hr />
 	<ModalFooter>
-		<div class="d-grid me-2">
+		<div class="d-grid">
 			<button @onclick="CloseModal" class="btn btn-secondary">Kapat</button>
 		</div>
 	</ModalFooter>
@@ -141,7 +138,8 @@
 
 			SecilenHat = HatlarListesi.FirstOrDefault(x => x.HatKodu == secilenHat);
 		}
-		else {
+		else
+		{
 
 			SecilenHat = null;
 		}

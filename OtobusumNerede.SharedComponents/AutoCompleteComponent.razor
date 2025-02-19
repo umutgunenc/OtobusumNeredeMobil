@@ -1,24 +1,31 @@
 ﻿@using System.Linq.Expressions
 @typeparam TItem
 
-<div class="autocomplete-container" >
+<div class="autocomplete-container">
     <div class="card">
         <div class="card-header">
-            <input type="text" @bind="SearchText" @bind:event="oninput" placeholder="@Placeholder" class="form-control" />
+            <input type="text"
+                   @bind="CurrentDisplayValue"
+                   @bind:event="oninput"
+                   placeholder="@StaticPlaceholder"
+                   class="form-control"
+                   @onfocus="HandleFocus"
+                   @onblur="HandleBlur" />
         </div>
         @if (IsListVisible && FilteredItems.Any())
         {
-            <div class="" style="max-height:200px; overflow-y: scroll;">
+            <div class="autocomplete-list-container">
                 <ul class="list-group list-group-flush autocomplete-list">
-                @foreach (var item in FilteredItems)
-                {
-                    <li value= class="list-group-item list-group-item-action autocomplete-item" @onclick="() => SelectItem(item)">
-                        @GetDisplayValue(item)
-                    </li>
-                }
+                    @foreach (var item in FilteredItems)
+                    {
+                        <li class="list-group-item list-group-item-action autocomplete-item"
+                            @onmousedown="() => SelectItem(item)"
+                            style="cursor: pointer">
+                            @GetDisplayValue(item)
+                        </li>
+                    }
                 </ul>
             </div>
-
         }
     </div>
 </div>
@@ -31,69 +38,76 @@
     public Expression<Func<TItem, object>> DisplayProperty { get; set; }
 
     [Parameter]
-    public string Placeholder { get; set; } = "Ara...";
+    public string StaticPlaceholder { get; set; } = "Ara...";
 
     [Parameter]
-    public EventCallback<TItem> OnItemSelected { get; set; }
+    public TItem SelectedItem { get; set; }
 
-    private string _searchText = "";
-    private string SearchText
+    [Parameter]
+    public EventCallback<TItem> SelectedItemChanged { get; set; }
+
+    private string _currentValue = "";
+    private bool _isFocused;
+    private List<TItem> FilteredItems { get; set; } = new();
+    private bool IsListVisible { get; set; }
+
+    private string CurrentDisplayValue
     {
-        get => _searchText;
+        get => _isFocused ? _currentValue :
+               SelectedItem != null ? GetDisplayValue(SelectedItem) : "";
         set
         {
-            _searchText = value;
-            OnSearchTextChanged(value);
+            _currentValue = value;
+            FilterItems(value);
         }
     }
-
-    private List<TItem> FilteredItems { get; set; } = new();
-    private bool IsListVisible { get; set; } = false;
 
     protected override void OnInitialized()
     {
         FilteredItems = new List<TItem>(Items);
     }
 
-    private void ShowList()
+    private void HandleFocus()
     {
+        _isFocused = true;
+        _currentValue = "";
+        FilteredItems = new List<TItem>(Items);
         IsListVisible = true;
     }
 
-    private async Task HideList()
+    private void HandleBlur()
     {
+        _isFocused = false;
         IsListVisible = false;
-        StateHasChanged();
     }
 
     private async Task SelectItem(TItem item)
     {
-        SearchText = GetDisplayValue(item);
+        SelectedItem = item;
+        _isFocused = false;
         IsListVisible = false;
-
-        await OnItemSelected.InvokeAsync(item);
-
+        await SelectedItemChanged.InvokeAsync(item);
+        StateHasChanged();
     }
 
-    private void OnSearchTextChanged(string value)
+    private void FilterItems(string searchText)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(searchText))
         {
             FilteredItems = new List<TItem>(Items);
-            IsListVisible = false;
         }
         else
         {
-            FilteredItems = Items.Where(x => GetDisplayValue(x).Contains(value, StringComparison.OrdinalIgnoreCase)).ToList();
-            IsListVisible = true;
+            FilteredItems = Items.Where(x =>
+                GetDisplayValue(x).Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
         }
-
-        StateHasChanged();
+        IsListVisible = FilteredItems.Any();
     }
 
     private string GetDisplayValue(TItem item)
     {
-        if (DisplayProperty == null)
+        if (DisplayProperty == null || item == null)
             return item?.ToString() ?? string.Empty;
 
         var func = DisplayProperty.Compile();

@@ -18,13 +18,14 @@
 
 			<div class="col-md-12 my-4">
 
-				<AutoCompleteComponent
-				TItem="HatDto"
-				Items="HatlarDto"
-				DisplayProperty="@(x=>x.HatKodu)"
-				Placeholder="@(SecilenHat != null ? SecilenHat.HatKodu : "Hat Kodunu Giriniz")"
-				OnItemSelected="HatSecildi">
-				</AutoCompleteComponent>
+			<AutoCompleteComponent TItem="HatDto"
+								   Items="HatlarDto"
+								   SelectedItem="SecilenHat"
+								   SelectedItemChanged="HatSecildi"
+								   StaticPlaceholder="Hat Kodunu Giriniz"
+								   DisplayProperty="@(x => x.HatKoduAdi)">
+			</AutoCompleteComponent>
+
 
 			</div>
 			@if (SecilenHat!=null)

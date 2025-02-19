@@ -1,4 +1,6 @@
-﻿
+﻿@inject IJSRuntime JS
+ 
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Offcanvas navbar large">
     <div class="container-fluid">
         <a class="navbar-brand" href="#"><i class="bi bi-bus-front"></i> Otobüsüm Nerede</a>
@@ -6,35 +8,44 @@
                 aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+        
+        <div class="offcanvas offcanvas-top text-bg-dark" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div class="offcanvas-header">
                 <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menü</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/" data-bs-dismiss="offcanvas">
-                            Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="SeferSaatleri" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-clock-history"></i> Sefer Saatleri
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="OtobusumNerede" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-patch-question"></i> Otobüsüm Nerede
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="Duyurular" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-rss"></i> Duyurular
-                        </a>
-                    </li>
+                    <NavLink class="nav-link" href="/Home" @onclick="CloseOffcanvas">
+                        <i class="bi bi-houses"></i> Ana Sayfa
+                    </NavLink>
+                    <NavLink class="nav-link" href="/SeferSaatleri" @onclick="CloseOffcanvas">
+                        <i class="bi bi-clock-history"></i> Sefer Saatleri
+                    </NavLink>
+                    <NavLink class="nav-link" href="/OtobusumNerede" @onclick="CloseOffcanvas">
+                        <i class="bi bi-patch-question"></i> Otobüsüm Nerede
+                    </NavLink>
+                    <NavLink class="nav-link" href="/Duyurular" @onclick="CloseOffcanvas">
+                        <i class="bi bi-rss"></i> Duyurular
+                    </NavLink>
                 </ul>
             </div>
         </div>
     </div>
 </nav>
+
+@code {
+    private async Task CloseOffcanvas()
+    {
+        await JS.InvokeVoidAsync("closeOffcanvas", "#offcanvasNavbar");
+    }
+}
+<script>
+    window.closeOffcanvas = (selector) => {
+      const offcanvasElement = document.querySelector(selector);
+      const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvasElement);
+      if (offcanvasInstance) {
+        offcanvasInstance.hide();
+      }
+    }
+</script>
