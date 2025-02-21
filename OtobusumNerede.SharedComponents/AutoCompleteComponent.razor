@@ -10,7 +10,7 @@
                    placeholder="@StaticPlaceholder"
                    class="form-control"
                    @onfocus="HandleFocus"
-                   @onblur="HandleBlur" />
+                   @onblur="HandleBlur"/>
         </div>
         @if (IsListVisible && FilteredItems.Any())
         {
@@ -32,7 +32,7 @@
 
 @code {
     [Parameter]
-    public List<TItem> Items { get; set; } = new();
+    public List<TItem> DisplayedItemsList { get; set; } = new();
 
     [Parameter]
     public Expression<Func<TItem, object>> DisplayProperty { get; set; }
@@ -64,14 +64,14 @@
 
     protected override void OnInitialized()
     {
-        FilteredItems = new List<TItem>(Items);
+        FilteredItems = new List<TItem>(DisplayedItemsList);
     }
 
     private void HandleFocus()
     {
         _isFocused = true;
         _currentValue = "";
-        FilteredItems = new List<TItem>(Items);
+        FilteredItems = new List<TItem>(DisplayedItemsList);
         IsListVisible = true;
     }
 
@@ -94,11 +94,11 @@
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            FilteredItems = new List<TItem>(Items);
+            FilteredItems = new List<TItem>(DisplayedItemsList);
         }
         else
         {
-            FilteredItems = Items.Where(x =>
+            FilteredItems = DisplayedItemsList.Where(x =>
                 GetDisplayValue(x).Contains(searchText, StringComparison.OrdinalIgnoreCase)
             ).ToList();
         }

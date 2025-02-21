@@ -1,0 +1,222 @@
+﻿/*.leaflet-map {
+    height: 60vh;
+    width: 100%;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.map-control-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #4CAF50;
+}
+
+.leaflet-popup-content {
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.bus-marker {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.route-line {
+    stroke-linecap: round;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+*/
+
+/* wwwroot/css/app.css veya component içindeki style tag'ine ekleyin */
+
+/* Temel Harita Stilleri */
+.leaflet-map {
+    height: 65vh;
+    min-height: 500px;
+    width: 100%;
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: height 0.3s ease;
+}
+
+/* Harita Kontrolleri */
+.leaflet-control {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important;
+}
+
+.leaflet-control-zoom {
+    margin: 15px !important;
+}
+
+    .leaflet-control-zoom a {
+        width: 34px !important;
+        height: 34px !important;
+        line-height: 34px !important;
+        font-size: 18px !important;
+        color: #2c3e50 !important;
+        border-bottom: none !important;
+    }
+
+/* Marker Popup'ları */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
+    padding: 8px !important;
+    min-width: 200px;
+}
+
+.leaflet-popup-content {
+    margin: 12px !important;
+    font-family: 'Segoe UI', system-ui;
+    font-size: 14px;
+    color: #34495e;
+}
+
+    .leaflet-popup-content b {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+/* Kullanıcı Konum Animasyonu */
+.user-location-marker .pulse-dot {
+    width: 16px;
+    height: 16px;
+    background: #2196F3;
+    border-radius: 50%;
+    position: absolute;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 1;
+    }
+
+    70% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+}
+
+/* Otobüs Marker Stili */
+.leaflet-marker-icon .bus-marker-inner {
+    width: 32px;
+    height: 32px;
+    background: url('/icons/busIcon.png') center/contain no-repeat;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    .leaflet-map {
+        height: 55vh;
+        min-height: 300px;
+    }
+
+    .map-control-btn {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+}
+
+/* AutoComplete Component Uyumluluk */
+.autocomplete-container {
+    position: relative;
+    z-index: 2;
+}
+
+.autocomplete-menu {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border: none !important;
+    margin-top: 8px !important;
+    border-radius: 8px !important;
+}
+
+/* Yükleniyor Spinner */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+/* Hata Mesajları */
+.map-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #e74c3c;
+}
+
+    .map-error i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+/* Güzergah Renkleri */
+.route-color-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255,255,255,0.9);
+    padding: 12px;
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+.route-color-item {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+}
+
+.route-color-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
